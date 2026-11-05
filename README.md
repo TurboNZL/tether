@@ -35,38 +35,6 @@ audio as `USAGE_MEDIA`. The in-app diagnostics show `mode`, `a2dpOn` and the inc
   from the foreground service, so it still fires with the screen off.
 - **UI**: dark Liquid Glass from plain Views: a drifting aurora scene behind frosted panels with an SDF edge lens
   (AGSL, Android 13+; blur only on 12, flat on older), a specular rim, gel-like press feedback and a glass-lens slider.
-
-- **Web session**: opens a configurable https page in an embedded browser and keeps it running with the screen off or the
-  app in the background (microphone foreground service plus wake/Wi-Fi locks). The address is a setting; nothing is
-  hard-coded.
-  - **Picture in picture**: the **Mini** button (and Home, on Android 12+ automatically) shrinks the page into a small floating window, hiding the controls; tap it to expand again. A visible window also makes Android much less likely to unload the app mid-call.
-  - **Desktop emulation**: desktop user agent and client hints, a desktop-width layout viewport (overriding the page's own
-    `width=device-width`), and desktop `navigator` properties. "Show page info" in Settings prints what the page sees.
-  - **Page zoom**: a slider that lays the page out again at `1280 / zoom` CSS pixels wide, like browser zoom (everything
-    reflows; nothing is just magnified).
-  - **Hang up timer**: a delay or a clock time; ends the call on this end by closing the page. The notification shows a live
-    countdown and the clock time it will hang up at.
-  - **Microphone**: a page only sees the system default input, so the phone's real inputs (the same list as the main screen)
-    are captured natively (plain MIC source, optional platform echo cancellation / noise suppression) and played into the
-    page as its microphone (`getUserMedia` wrapper in `assets/session.js`). There is no automatic input: the phone's own microphone is used until another is picked, and the page lists the chosen input by name.
-    The choice can be changed mid-call without renegotiating.
-  - **Mute is locked, not just switched**: a page can flip its own track's on/off switch at any time (its own mute
-    button does), so every outgoing audio track is locked: the page still reads and writes the switch as usual, but the real
-    value underneath is "what the page set AND NOT our mute", applied on every write. New calls, `replaceTrack`, clones,
-    `addTransceiver` and re-acquired microphones are all hooked; the native microphone path also sends silence while muted;
-    and the page confirms the mute is real every 2 s (the app warns if it cannot).
-  - **Mute**, **call volume** (0-200% gain on the other person's voice, only routed when not 100%) and a live outgoing
-    **level strip**; the Settings sheet also has a native **microphone level test** and brightness (the same volume and
-    brightness values as the rest of the app).
-  - **Microphone volume** (0-300% gain on what the other person hears) and a **record and play back** test: it records a few
-    seconds with the same settings the call uses (so it includes the gain), plays them back through the phone's media
-    volume, and rates the peak level (clipping / good / faint / silent). It works while the call is muted: with a chosen phone
-    input the app reads the microphone itself. After a faint or too-loud result, one tap
-    sets the microphone volume that would have put the peak near -6 dB.
-  - The mute check asks the page directly (page timers are slowed in the background, so the page does not volunteer
-    confirmations); it fixes a leak at once, and warns about an unanswering page only when a real page is loaded, after three
-    misses in a row, once per page load.
-  - Leaving the app never pauses the page; the notification has Mute and Close page and tapping it returns to the page.
 - **Microphone test**: the Microphone card has a live level meter on the selected input, so you can see the mic works.
 
 ### Build
@@ -77,3 +45,8 @@ the `tether-apk` artifact (Actions tab > the run > Artifacts). On `main` it also
 `android/app/debug.keystore`, so each new APK installs over the last one. Locally: `cd android && ./gradlew assembleDebug`.
 
 The room-code prefix (`tether-`) must match between `index.html` (`PREFIX`) and `CallManager.PEER_PREFIX`.
+
+## Web pages
+
+Tether no longer opens arbitrary web pages. That part (the embedded browser that keeps a page running with the screen
+off) is now its own app, [TurboBox](https://github.com/TurboNZL/turbobox).
